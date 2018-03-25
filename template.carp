@@ -1,0 +1,12 @@
+(load "../anima/anima.carp")
+(use Anima)
+
+(def size 800)
+
+(defn setup [renderer]
+  ())
+
+(defn draw [renderer]
+  ())
+
+(defsketch "Enthusiasticon 2018" size size setup draw)
