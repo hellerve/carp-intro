@@ -1,4 +1,6 @@
--> # Carp: A Language for the 21st century <-
+%title: Carp: A Language for the 21st century
+%author: Veit Heller
+%date: 2018-03-31
 
 ---
 
@@ -17,33 +19,34 @@
 -> # Why?
 
 * Lisps (traditionally) always have garbage collection
-  * no hard realtime :(
-  * games and other multimedia applications are hard to program like that
+* no hard realtime :(
+* games and other multimedia applications are hard
+  to program like that
 
 ---
 
 -> # Why?
 
 * Lisps (traditionally) are dynamically typed
-  * makes it harder to compile them efficiently
-  * generates avoidable runtime errors
+* makes it harder to compile them efficiently
+* generates avoidable runtime errors
 
 ---
 
 -> # Why?
 
-* Enter Haskell
-  * let’s have Hindley-Milner typing, it’s super powerful!
-  * let’s have types be inferred by the compiler!
+Enter Haskell
+* let’s have Hindley-Milner typing, it’s super powerful!
+* let’s have types be inferred by the compiler!
 
 ---
 
 -> # Why?
 
-* Enter Rust
-  * let’s have ownership and borrowing semantics!
-  * we can throw away the garbage collector by inferring when to allocate and
-    free memory
+Enter Rust
+* let’s have ownership and borrowing semantics!
+* we can throw away the garbage collector by inferring
+  when to allocate and free memory
 
 ---
 
@@ -57,10 +60,10 @@
 
 -> # Why?
 
-* Enter Carp
-  * Hindley-Milner types
-  * Ownership/borrowing semantics
-  * Powerful Lisp macro system on top!
+Enter Carp
+* Hindley-Milner types
+* Ownership/borrowing semantics
+* Powerful Lisp macro system on top!
 
 ---
 
@@ -68,7 +71,7 @@
 
 ```
 (def x 1)
-
+  
 (defn main []
   (IO.println (str (+ x 10))))
 ```
@@ -79,14 +82,16 @@
 
 ```
 (deftype Vector [x Int y Int])
-
+  
 (defmodule Vector
   (defn + [a b]
-    (Vector.init (+ a.x b.x) (+ a.y b.y)))
+    (Vector.init (+ (x a) (x b))
+                 (+ (y a) (y b))))
 )
-
+  
 (defn main []
-  (IO.println (str (+ (Vector.init 1 2) (Vector.init 3 4)))))
+  (IO.println (str (+ (Vector.init 1 2)
+                      (Vector.init 3 4)))))
 ```
 
 ---
