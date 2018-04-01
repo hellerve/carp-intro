@@ -1,0 +1,131 @@
+(load "sdl.carp")
+(load "sdl_image.carp")
+(load "Vector.carp")
+
+(use-all Vector2)
+
+(defmodule Anima
+  (def fr 60)
+  (hidden fr)
+  (private fr)
+
+  ; super naive way
+  (doc framerate "Set the framerate to n per second.")
+  (defn framerate [n]
+    (set! fr n))
+
+  (hidden set-color)
+  (defn set-color [rend r g b alpha]
+    (SDL.set-render-draw-color rend r g b alpha))
+
+  (hidden set-background)
+  (defn-do set-background [rend r g b alpha]
+    (SDL.set-render-draw-color rend r g b alpha)
+    (SDL.render-clear rend))
+
+  (doc line "Draw a line from (ax, ay) to (bx, by).")
+  (defn line [rend ax ay bx by]
+    (SDL.render-draw-line rend ax ay bx by))
+
+  (doc rand "Generate a random integer from 0 to i.")
+  (defn rand [i]
+    (Int.random-between 0 i))
+
+  (doc random-between "Generate a random integer from min to max.")
+  (defn random-between [min max]
+    (Int.random-between min max))
+
+  (doc rect "Draw a rectangle with (ax, ay) as origin, w as width, and h as height.")
+  (defn rect [rend ax ay w h]
+    (let [bx ax
+          by ay
+          r (SDL.rect bx by (- w bx) (- h by))]
+      (SDL.render-fill-rect rend (address r))))
+
+  (hidden cvrt-)
+  (private cvrt-)
+  (defn cvrt- [c]
+    (Float.to-int (+ (* c 255.0f) 0.5f)))
+
+  (doc hsb-to-rgb "Convert a three-component HSB color to an RGB color array.")
+  (defn hsb-to-rgb [ih is ib]
+    (let [h (/ (Float.from-int ih) 360.0f)
+          s (/ (Float.from-int is) 100.0f)
+          b (/ (Float.from-int ib) 100.0f)
+          i (cvrt- b)]
+      (if (= 0.0f s)
+        [i i i]
+        (let [h1 (* (- h (Float.floor h)) 6.0f)
+              f (- h1 (Float.floor h1))
+              p (* b (- 1.0f s))
+              q (* b (- 1.0f (* s f)))
+              t (* b (- 1.0f (* s (- 1.0f f))))]
+          (case (Float.to-int h1)
+            0 [i (cvrt- t) (cvrt- p)]
+            1 [(cvrt- q) (cvrt- b) (cvrt- p)]
+            2 [(cvrt- p) (cvrt- b) (cvrt- t)]
+            3 [(cvrt- p) (cvrt- q) (cvrt- b)]
+            4 [(cvrt- t) (cvrt- p) (cvrt- b)]
+            5 [(cvrt- b) (cvrt- p) (cvrt- q)]
+            [])))))
+
+  (hidden handle-events)
+  (defn handle-events [app rend]
+    (let [event (SDL.Event.init)]
+      (while (SDL.Event.poll (address event))
+        (let [et (SDL.Event.type &event)]
+          (cond (= et SDL.Event.quit) (SDLApp.stop app)
+                (= et SDL.Event.key-down) (let [key (SDL.Event.keycode &event)]
+                                             (when (= key SDL.Keycode.escape)
+                                               (SDLApp.stop app)))
+                ())))))
+
+  ;(doc defsketch "Create a sketch with a name, width, height, and setup function. Optionally takes a draw and state function as well.")
+  ;(sig defsketch (Fn [&String Int Int (Fn [SDL.Renderer] ())] ()))
+  ;(doc color "Set the current drawing color to color. The color can have 1 component (greyscale, from 0 to 255), three components (RGB value, from 0 to 255), or 4 components (RGBA value, from 0 to 255).")
+  ;(sig color (Fn [SDL.Renderer Int] ()))
+  ;(doc background "Set the current background color to color. The color can have 1 component (greyscale, from 0 to 255), three components (RGB value, from 0 to 255), or 4 components (RGBA value, from 0 to 255). **Warning**: This will also clear the screen with that color.")
+  ;(sig background (Fn [SDL.Renderer Int] ()))
+)
+
+(defmacro defsketch [name w h setup :rest draw-and-state]
+  (if (< 2 (count draw-and-state))
+    (macro-error "Cannot define sketch with more than six arguments.")
+    (list 'defn 'main (array)
+      (list 'let (array 'app (list 'SDLApp.create name w h)
+                        'rend (list 'copy (list 'SDLApp.renderer
+                                                (list 'ref 'app)))
+                        'anima--state (if (= (count draw-and-state) 2)
+                                        (list (car (cdr draw-and-state)))
+                                        0)) ;; TODO: remove standin
+        (list 'do
+          (project-set! "title" name)
+          (list 'System.seed-random (list 'System.time))
+          (if (> (count draw-and-state) 0) (list setup 'rend) (list))
+          (list 'while true
+            (list 'do
+                  (list 'handle-events (list 'ref 'app) 'rend)
+                  (if (> (count draw-and-state) 0)
+                    (if (> (count draw-and-state) 1)
+                      (list 'set! 'anima--state
+                            (list (car draw-and-state) 'rend 'anima--state))
+                      (list (car draw-and-state) 'rend))
+                    (list setup 'rend))
+                  (list 'SDL.render-present 'rend)
+                  (list 'if (list '= 'fr 0)
+                    (list 'forever-do (list 'handle-events (list 'ref 'app) 'rend))
+                    (list 'SDL.delay (list '/ 1000 'fr))))))))))
+
+(hidden setter)
+(defdynamic setter [fn r color cs]
+  (if (= (count cs) 0)
+    (list fn r color color color 255)
+    (if (= (count cs) 2)
+      (list fn r color (car cs) (car (cdr cs)) 255)
+      (list fn r color (car cs) (car (cdr cs)) (car (cdr (cdr cs)))))))
+
+(defmacro color [r color :rest cs]
+  (setter 'set-color r color cs))
+
+(defmacro background [r background :rest cs]
+  (setter 'set-background r background cs))

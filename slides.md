@@ -80,24 +80,6 @@ Enter Carp
 
 -> # What about some real code?
 
-```
-(deftype Vector [x Int y Int])
-  
-(defmodule Vector
-  (defn + [a b]
-    (Vector.init (+ (x a) (x b))
-                 (+ (y a) (y b))))
-)
-  
-(defn main []
-  (IO.println (str (+ (Vector.init 1 2)
-                      (Vector.init 3 4)))))
-```
-
----
-
--> # What about some real real code?
-
 ---
 
 -> # Let’s talk about anima
