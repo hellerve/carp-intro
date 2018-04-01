@@ -4,14 +4,9 @@
 (def size 800)
 
 (defn setup [renderer]
-  (framerate 1))
+  ())
 
 (defn draw [renderer]
-  (do (background renderer 30)
-      (color renderer 255)
-    (for [i 0 300]
-      (let [x (rand size)
-            y (rand size)]
-        (line renderer x y x x)))))
+  ())
 
 (defsketch "Enthusiasticon 2018" size size setup draw)
